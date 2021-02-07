@@ -140,6 +140,9 @@ void TimeStepDFSPH::step()
 				{
 					Vector3r &vel = fm->getVelocity(i);
 					vel += h * fm->getAcceleration(i);
+
+					Vector3r &anonp = fm->getAccelerationNonPressure(i);
+					anonp = fm->getAcceleration(i);
 				}
 			}
 		}
@@ -1295,6 +1298,9 @@ void TimeStepDFSPH::pressureSolveIteration(const unsigned int fluidModelIndex, R
 
 			Vector3r &v_i = model->getVelocity(i);
 			const Vector3r &xi = model->getPosition(i);
+			//media_edit: count fluid, rigid acceleration
+			Vector3r &af_i = model->getAccelerationFluid(i);
+			Vector3r &ar_i = model->getAccelerationRigid(i);
 
 			//////////////////////////////////////////////////////////////////////////
 			// Fluid
@@ -1308,7 +1314,10 @@ void TimeStepDFSPH::pressureSolveIteration(const unsigned int fluidModelIndex, R
 					const Vector3r grad_p_j = -fm_neighbor->getVolume(neighborIndex) *sim->gradW(xi - xj);
 
 					// Directly update velocities instead of storing pressure accelerations
-					v_i -= h * kSum * grad_p_j;			// ki, kj already contain inverse density						
+					v_i -= h * kSum * grad_p_j;			// ki, kj already contain inverse density
+
+					//media_edit: count fluid acceleration
+					af_i -= kSum * grad_p_j;						
 				}
 			)
 
@@ -1326,6 +1335,9 @@ void TimeStepDFSPH::pressureSolveIteration(const unsigned int fluidModelIndex, R
 						const Vector3r velChange = -h * (Real) 1.0 * ki * grad_p_j;				// kj already contains inverse density
 						v_i += velChange;
 						bm_neighbor->addForce(xj, -model->getMass(i) * velChange * invH);
+
+						//media_edit: count rigid acceleration
+						ar_i -= (Real) 1.0 * ki * grad_p_j;
 					);
 				}
 				else if (sim->getBoundaryHandlingMethod() == BoundaryHandlingMethods::Koschier2017)
@@ -1334,6 +1346,9 @@ void TimeStepDFSPH::pressureSolveIteration(const unsigned int fluidModelIndex, R
 						const Vector3r velChange = -h * (Real) 1.0 * ki * gradRho;				// kj already contains inverse density
 						v_i += velChange;
 						bm_neighbor->addForce(xj, -model->getMass(i) * velChange * invH);
+
+						//media_edit: count rigid acceleration
+						ar_i -= (Real) 1.0 * ki * gradRho;
 					);
 				}
 				else if (sim->getBoundaryHandlingMethod() == BoundaryHandlingMethods::Bender2019)
@@ -1344,6 +1359,9 @@ void TimeStepDFSPH::pressureSolveIteration(const unsigned int fluidModelIndex, R
 						v_i += velChange;
 
 						bm_neighbor->addForce(xj, -model->getMass(i) * velChange * invH);
+
+						//media_edit: count rigid acceleration
+						ar_i -= (Real) 1.0 * ki * grad_p_j;
 					);
 				}
 			}

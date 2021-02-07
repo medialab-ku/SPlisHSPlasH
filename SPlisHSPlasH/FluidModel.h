@@ -108,6 +108,11 @@ namespace SPH
 			std::vector<Vector3r> m_x0;
 			std::vector<Vector3r> m_x;
 			std::vector<Vector3r> m_v;
+			//media_edit: split a into 3 part
+			std::vector<Vector3r> m_a_nonp;
+			std::vector<Vector3r> m_a_fluid;
+			std::vector<Vector3r> m_a_rigid;
+
 			std::vector<Real> m_density;
 			std::vector<unsigned int> m_particleId;
 			std::vector<ParticleState> m_particleState;
@@ -369,6 +374,36 @@ namespace SPH
 			FORCE_INLINE Real& getVolume(const unsigned int i)
 			{
 				return m_V;
+			}
+			//media_edit: split a into 3 part
+			FORCE_INLINE Vector3r &getAccelerationNonPressure(const unsigned int i)
+			{
+				return m_a_nonp[i];
+			}
+
+			FORCE_INLINE const Vector3r &getAccelerationNonPressure(const unsigned int i) const
+			{
+				return m_a_nonp[i];
+			}
+
+			FORCE_INLINE Vector3r &getAccelerationFluid(const unsigned int i)
+			{
+				return m_a_fluid[i];
+			}
+
+			FORCE_INLINE const Vector3r &getAccelerationFluid(const unsigned int i) const
+			{
+				return m_a_fluid[i];
+			}
+
+			FORCE_INLINE Vector3r &getAccelerationRigid(const unsigned int i)
+			{
+				return m_a_rigid[i];
+			}
+
+			FORCE_INLINE const Vector3r &getAccelerationRigid(const unsigned int i) const
+			{
+				return m_a_rigid[i];
 			}
 	};
 }

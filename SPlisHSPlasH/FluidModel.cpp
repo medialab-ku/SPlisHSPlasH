@@ -34,6 +34,9 @@ FluidModel::FluidModel() :
 	m_x0(),
 	m_x(),
 	m_v(),
+	m_a_nonp(),
+	m_a_fluid(),
+	m_a_rigid(),
 	m_density(),
 	m_particleId(),
 	m_particleState()
@@ -62,6 +65,10 @@ FluidModel::FluidModel() :
 	addField({ "position", FieldType::Vector3, [&](const unsigned int i) -> Real* { return &getPosition(i)[0]; }, true });
 	addField({ "velocity", FieldType::Vector3, [&](const unsigned int i) -> Real* { return &getVelocity(i)[0]; }, true });
 	addField({ "density", FieldType::Scalar, [&](const unsigned int i) -> Real* { return &getDensity(i); }, false });
+	//media_edit: split a into 3 part
+	addField({ "acceleration_nonpressure", FieldType::Vector3, [&](const unsigned int i) -> Real* { return &getAccelerationNonPressure(i)[0]; }, true });
+	addField({ "acceleration_fluid", FieldType::Vector3, [&](const unsigned int i) -> Real* { return &getAccelerationFluid(i)[0]; }, true });
+	addField({ "acceleration_rigid", FieldType::Vector3, [&](const unsigned int i) -> Real* { return &getAccelerationRigid(i)[0]; }, true });
 }
 
 FluidModel::~FluidModel(void)
@@ -70,6 +77,10 @@ FluidModel::~FluidModel(void)
 	removeFieldByName("position");
 	removeFieldByName("velocity");
 	removeFieldByName("density");
+	//media_edit: split a into 3 part
+	removeFieldByName("acceleration_nonpressure");
+	removeFieldByName("acceleration_fluid");
+	removeFieldByName("acceleration_rigid");
 
 	delete m_emitterSystem;
 	delete m_surfaceTension;
@@ -177,6 +188,9 @@ void FluidModel::reset()
 		getPosition(i) = x0;
 		getVelocity(i) = getVelocity0(i);
 		getAcceleration(i).setZero();
+		getAccelerationNonPressure(i).setZero();
+		getAccelerationFluid(i).setZero();
+		getAccelerationRigid(i).setZero();
 		m_density[i] = 0.0;
 		m_particleId[i] = i;
 		m_particleState[i] = ParticleState::Active;
@@ -233,6 +247,9 @@ void FluidModel::resizeFluidParticles(const unsigned int newSize)
 	m_v.resize(newSize);
 	m_v0.resize(newSize);
 	m_a.resize(newSize);
+	m_a_nonp.resize(newSize);
+	m_a_fluid.resize(newSize);
+	m_a_rigid.resize(newSize);
 	m_masses.resize(newSize);
 	m_density.resize(newSize);
 	m_particleId.resize(newSize);
@@ -246,6 +263,9 @@ void FluidModel::releaseFluidParticles()
 	m_v.clear();
 	m_v0.clear();
 	m_a.clear();
+	m_a_nonp.clear();
+	m_a_fluid.clear();
+	m_a_rigid.clear();
 	m_masses.clear();
 	m_density.clear();
 	m_particleId.clear();
@@ -305,6 +325,9 @@ void FluidModel::performNeighborhoodSearchSort()
 	d.sort_field(&m_x[0]);
 	d.sort_field(&m_v[0]);
 	d.sort_field(&m_a[0]);
+	d.sort_field(&m_a_nonp[0]);
+	d.sort_field(&m_a_fluid[0]);
+	d.sort_field(&m_a_rigid[0]);
 	d.sort_field(&m_masses[0]);
 	d.sort_field(&m_density[0]);
 	d.sort_field(&m_particleId[0]);

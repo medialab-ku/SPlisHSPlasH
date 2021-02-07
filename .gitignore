@@ -1,0 +1,8 @@
+
+bin/
+
+build/
+
+.vscode/settings.json
+
+Utilities/Version.h
