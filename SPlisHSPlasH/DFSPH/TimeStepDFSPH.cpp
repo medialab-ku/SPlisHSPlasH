@@ -138,9 +138,6 @@ void TimeStepDFSPH::step()
 			{
 				if (fm->getParticleState(i) == ParticleState::Active)
 				{
-					Vector3r &vel = fm->getVelocity(i);
-					vel += h * fm->getAcceleration(i);
-
 					Vector3r &anonp = fm->getAccelerationNonPressure(i);
 					anonp = fm->getAcceleration(i);
 				}
@@ -151,6 +148,24 @@ void TimeStepDFSPH::step()
 	START_TIMING("pressureSolve");
 	pressureSolve();
 	STOP_TIMING_AVG;
+
+	for (unsigned int m = 0; m < nModels; m++)
+	{
+		FluidModel *fm = sim->getFluidModel(m);
+		const unsigned int numParticles = fm->numActiveParticles();
+		#pragma omp parallel default(shared)
+		{
+			#pragma omp for schedule(static)  
+			for (int i = 0; i < (int)numParticles; i++)
+			{
+				if (fm->getParticleState(i) == ParticleState::Active)
+				{
+					Vector3r &vel = fm->getVelocity(i);
+					vel += h * (fm->getAccelerationNonPressure(i) + fm->getAccelerationFluid(i) + fm->getAccelerationRigid(i));
+				}
+			}
+		}
+	}
 
 	// compute final positions
 	for (unsigned int m = 0; m < nModels; m++)
@@ -1314,7 +1329,7 @@ void TimeStepDFSPH::pressureSolveIteration(const unsigned int fluidModelIndex, R
 					const Vector3r grad_p_j = -fm_neighbor->getVolume(neighborIndex) *sim->gradW(xi - xj);
 
 					// Directly update velocities instead of storing pressure accelerations
-					v_i -= h * kSum * grad_p_j;			// ki, kj already contain inverse density
+					//v_i -= h * kSum * grad_p_j;			// ki, kj already contain inverse density
 
 					//media_edit: count fluid acceleration
 					af_i -= kSum * grad_p_j;						
@@ -1333,7 +1348,7 @@ void TimeStepDFSPH::pressureSolveIteration(const unsigned int fluidModelIndex, R
 
 						// Directly update velocities instead of storing pressure accelerations
 						const Vector3r velChange = -h * (Real) 1.0 * ki * grad_p_j;				// kj already contains inverse density
-						v_i += velChange;
+						//v_i += velChange;
 						bm_neighbor->addForce(xj, -model->getMass(i) * velChange * invH);
 
 						//media_edit: count rigid acceleration
@@ -1344,7 +1359,7 @@ void TimeStepDFSPH::pressureSolveIteration(const unsigned int fluidModelIndex, R
 				{
 					forall_density_maps(
 						const Vector3r velChange = -h * (Real) 1.0 * ki * gradRho;				// kj already contains inverse density
-						v_i += velChange;
+						//v_i += velChange;
 						bm_neighbor->addForce(xj, -model->getMass(i) * velChange * invH);
 
 						//media_edit: count rigid acceleration
@@ -1356,7 +1371,7 @@ void TimeStepDFSPH::pressureSolveIteration(const unsigned int fluidModelIndex, R
 					forall_volume_maps(
 						const Vector3r grad_p_j = -Vj * sim->gradW(xi - xj);
 						const Vector3r velChange = -h * (Real) 1.0 * ki * grad_p_j;				// kj already contains inverse density
-						v_i += velChange;
+						//v_i += velChange;
 
 						bm_neighbor->addForce(xj, -model->getMass(i) * velChange * invH);
 
