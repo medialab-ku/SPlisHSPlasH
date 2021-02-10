@@ -149,6 +149,7 @@ void Viscosity_Bender2017::step()
 			{
 				const Vector3r &xi = m_model->getPosition(i);
 				Vector3r &vi = m_model->getVelocity(i);
+				Vector3r &ai_f = m_model->getAccelerationFluid(i);
 				const Real density_i = m_model->getDensity(i);
 
 
@@ -159,6 +160,7 @@ void Viscosity_Bender2017::step()
 				forall_fluid_neighbors_in_same_phase(
 					const Vector3r gradW = sim->gradW(xi - xj);
 					const Real density_j = m_model->getDensity(neighborIndex);
+					Vector3r velChange;
 
  					gradT.setZero();
  					gradT(0,0) = static_cast<Real>(2.0) * gradW[0];
@@ -173,8 +175,10 @@ void Viscosity_Bender2017::step()
  					gradT(2,4) = gradW[0];
  					gradT(2,5) = gradW[1];
  
- 					vi -= m_model->getMass(neighborIndex)* 0.5 * gradT * ((m_model->getMass(neighborIndex) / (density_i*density_i)) * getViscosityLambda(i) +
+					velChange = -m_model->getMass(neighborIndex)* 0.5 * gradT * ((m_model->getMass(neighborIndex) / (density_i*density_i)) * getViscosityLambda(i) +
  						(m_model->getMass(neighborIndex) / (density_j*density_j)) * getViscosityLambda(neighborIndex));
+ 					vi += velChange;
+					ai_f += velChange / h;
 				)
 			}
 		}
@@ -196,6 +200,7 @@ void Viscosity_Bender2017::step()
 			const Vector3r &xi = m_model->getPosition(i);
 			const Vector3r &vi = m_model->getVelocity(i);
 			Vector3r &ai = m_model->getAcceleration(i);
+			Vector3r &ai_b = m_model->getAccelerationBoundary(i);
 			const Real density_i = m_model->getDensity(i);
 
 			//////////////////////////////////////////////////////////////////////////
@@ -207,6 +212,7 @@ void Viscosity_Bender2017::step()
 					const Vector3r &vj = bm_neighbor->getVelocity(neighborIndex);
 					const Vector3r a = -invH * 0.1 * m_viscosity * (density0 * bm_neighbor->getVolume(neighborIndex) / density_i) * (vi - vj)* sim->W(xi - xj);
 					ai += a;
+					ai_b += a;
 					bm_neighbor->addForce(xj, -m_model->getMass(i) * a);
 				);
 			}

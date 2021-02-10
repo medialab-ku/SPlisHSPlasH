@@ -105,9 +105,12 @@ void TimeStepDFSPH::step()
 			#pragma omp for schedule(static)
 			for (int i = 0; i < (int)numParticles; i++)
 			{
-				fm->getAccelerationFluid(i).setZero();
-				fm->getAccelerationBoundary(i).setZero();
-				fm->getAccelerationTotal(i) = fm->getVelocity(i);
+				if (fm->getParticleState(i) == ParticleState::Active)
+				{
+					fm->getAccelerationFluid(i).setZero();
+					fm->getAccelerationBoundary(i).setZero();
+					fm->getAccelerationTotal(i) = fm->getVelocity(i);
+				}
 			}
 		}
 	}
@@ -139,7 +142,7 @@ void TimeStepDFSPH::step()
 
 	sim->computeNonPressureForces();
 
-	//sim->updateTimeStepSize();
+	sim->updateTimeStepSize();
 
 	// compute new velocities only considering non-pressure forces
 	for (unsigned int m = 0; m < nModels; m++)
@@ -154,9 +157,7 @@ void TimeStepDFSPH::step()
 				if (fm->getParticleState(i) == ParticleState::Active)
 				{
 					Vector3r &vel = fm->getVelocity(i);
-					Vector3r &af = fm->getAccelerationFluid(i);
 					vel += h * fm->getAcceleration(i);
-					af += fm->getAcceleration(i);
 				}
 			}
 		}
@@ -182,7 +183,8 @@ void TimeStepDFSPH::step()
 					const Vector3r &vi = fm->getVelocity(i);
 					Vector3r &ai_t = fm->getAccelerationTotal(i);
 					xi += h * vi;
-					ai_t = (vi - ai_t) / h - fm->getAccelerationFluid(i) - fm->getAccelerationBoundary(i);
+					ai_t = (vi - ai_t) / h;
+					fm->getAccelerationFluid(i) = ai_t - fm->getAccelerationBoundary(i);
 				}
 			}
 		}

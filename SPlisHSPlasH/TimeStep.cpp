@@ -75,6 +75,7 @@ void TimeStep::clearAccelerations(const unsigned int fluidModelIndex)
 		{
 			Vector3r &a = model->getAcceleration(i);
 			a = grav;
+			model->getAccelerationFluid(i) += grav;
 		}
 	}
 }
