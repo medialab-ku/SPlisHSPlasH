@@ -482,7 +482,9 @@ void TimeStep::computeDensityAndGradient(const unsigned int fluidModelIndex, con
 				d = std::min(d, static_cast<Real>(0.25 / 0.005) * particleRadius * dt);		// get up in small steps
 				sim->getFluidModel(fluidModelIndex)->getPosition(i) = (xi + d * normal.cast<Real>());
 				// adapt velocity in normal direction
-				sim->getFluidModel(fluidModelIndex)->getVelocity(i) += (0.05 - sim->getFluidModel(fluidModelIndex)->getVelocity(i).dot(normal.cast<Real>())) * normal.cast<Real>();
+				Vector3r velChange = (0.05 - sim->getFluidModel(fluidModelIndex)->getVelocity(i).dot(normal.cast<Real>())) * normal.cast<Real>();
+				sim->getFluidModel(fluidModelIndex)->getVelocity(i) += velChange;
+				sim->getFluidModel(fluidModelIndex)->getAccelerationBoundary(i) += velChange / dt;
 			}
 			boundaryDensityGradient.setZero();
 			boundaryDensity = 0.0;

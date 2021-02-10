@@ -108,10 +108,10 @@ namespace SPH
 			std::vector<Vector3r> m_x0;
 			std::vector<Vector3r> m_x;
 			std::vector<Vector3r> m_v;
-			//media_edit: split a into 3 part
-			std::vector<Vector3r> m_a_nonp;
+			//media_edit: split a into 2 part
 			std::vector<Vector3r> m_a_fluid;
-			std::vector<Vector3r> m_a_rigid;
+			std::vector<Vector3r> m_a_boundary;
+			std::vector<Vector3r> m_a_total;
 
 			std::vector<Real> m_density;
 			std::vector<unsigned int> m_particleId;
@@ -375,17 +375,7 @@ namespace SPH
 			{
 				return m_V;
 			}
-			//media_edit: split a into 3 part
-			FORCE_INLINE Vector3r &getAccelerationNonPressure(const unsigned int i)
-			{
-				return m_a_nonp[i];
-			}
-
-			FORCE_INLINE const Vector3r &getAccelerationNonPressure(const unsigned int i) const
-			{
-				return m_a_nonp[i];
-			}
-
+			//media_edit: split a into 2 part
 			FORCE_INLINE Vector3r &getAccelerationFluid(const unsigned int i)
 			{
 				return m_a_fluid[i];
@@ -396,14 +386,38 @@ namespace SPH
 				return m_a_fluid[i];
 			}
 
-			FORCE_INLINE Vector3r &getAccelerationRigid(const unsigned int i)
+			FORCE_INLINE void setAccelerationFluid(const unsigned int i, const Vector3r &accel)
 			{
-				return m_a_rigid[i];
+				m_a_fluid[i] = accel;
 			}
 
-			FORCE_INLINE const Vector3r &getAccelerationRigid(const unsigned int i) const
+			FORCE_INLINE Vector3r &getAccelerationBoundary(const unsigned int i)
 			{
-				return m_a_rigid[i];
+				return m_a_boundary[i];
+			}
+
+			FORCE_INLINE const Vector3r &getAccelerationBoundary(const unsigned int i) const
+			{
+				return m_a_boundary[i];
+			}
+
+			FORCE_INLINE void setAccelerationBoundary(const unsigned int i, const Vector3r &accel)
+			{
+				m_a_boundary[i] = accel;
+			}
+			FORCE_INLINE Vector3r &getAccelerationTotal(const unsigned int i)
+			{
+				return m_a_total[i];
+			}
+
+			FORCE_INLINE const Vector3r &getAccelerationTotal(const unsigned int i) const
+			{
+				return m_a_total[i];
+			}
+
+			FORCE_INLINE void setAccelerationTotal(const unsigned int i, const Vector3r &accel)
+			{
+				m_a_total[i] = accel;
 			}
 	};
 }

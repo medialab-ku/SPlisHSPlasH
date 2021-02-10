@@ -799,7 +799,28 @@ bool SimulatorBase::timeStepNoGUI()
 	Simulation::getCurrent()->getTimeStep()->step();
 	STOP_TIMING_AVG;
 
+	for (unsigned int i = 0; i < sim->numberOfFluidModels(); i++)
+	{
+		FluidModel *model = sim->getFluidModel(i);
+		for (unsigned int i = 0; i < model->numActiveParticles(); i++)
+		{
+			Vector3r &a_b = model->getAccelerationBoundary(i);
+			a_b = model->getVelocity(i);
+		}
+	}
+
 	m_boundarySimulator->timeStep();
+
+	const Real h = TimeManager::getCurrent()->getTimeStepSize();
+	for (unsigned int i = 0; i < sim->numberOfFluidModels(); i++)
+	{
+		FluidModel *model = sim->getFluidModel(i);
+		for (unsigned int i = 0; i < model->numActiveParticles(); i++)
+		{
+			Vector3r &a_b = model->getAccelerationBoundary(i);
+			a_b = (model->getVelocity(i) - a_b) / h;
+		}
+	}
 
 	step();
 
