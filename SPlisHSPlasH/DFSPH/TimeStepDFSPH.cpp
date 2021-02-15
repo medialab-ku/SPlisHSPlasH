@@ -89,6 +89,7 @@ void TimeStepDFSPH::step()
 	TimeManager *tm = TimeManager::getCurrent ();
 	const Real h = tm->getTimeStepSize();
 	const unsigned int nModels = sim->numberOfFluidModels();
+	const Vector3r grav(sim->getVecValue<Real>(Simulation::GRAVITATION));
 
 	performNeighborhoodSearch();
 
@@ -184,7 +185,7 @@ void TimeStepDFSPH::step()
 					Vector3r &ai_t = fm->getAccelerationTotal(i);
 					xi += h * vi;
 					ai_t = (vi - ai_t) / h;
-					fm->getAccelerationFluid(i) = ai_t - fm->getAccelerationBoundary(i);
+					fm->getAccelerationFluid(i) = ai_t - fm->getAccelerationBoundary(i) - grav;
 				}
 			}
 		}
